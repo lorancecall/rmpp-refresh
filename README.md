@@ -26,7 +26,8 @@ or tick it in the rmpp installer.
 ## How it works
 
 `librmpp-refresh.so` is loaded into xochitl by `rmpp-preload` (`/usr/lib/rmpp-preload.d/50-rmpp-refresh.so`). It
-adds a `ToolbarTool` (QML, no moc) next to xochitl's `convertToTextButton`; tapping it closes the toolbar menu and,
+adds a `ToolbarTool` (QML, no moc) to the toolbar's layout (`#toolbarLayout`) just before xochitl's
+`secondaryToolLoader_settingsMenu`; tapping it closes the toolbar menu and,
 400 ms later, calls the ghost buster. It also watches `QInputMethod::visibleChanged` and calls the ghost buster
 700 ms after the keyboard appears (after its slide animation), only while a document is open.
 
