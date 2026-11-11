@@ -3,6 +3,9 @@
 A **Refresh screen** button for the reMarkable Paper Pro: one tap redraws the whole e-paper screen (a full refresh
 that clears ghosting), without leaving the notebook.
 
+It also refreshes once after the on-screen keyboard opens (that leaves ghosting in the notebook; closing it already
+makes xochitl redraw the page).
+
 The button is in the notebook toolbar's convert menu (where xochitl's own "Convert to text" is). It closes the menu
 first, then asks xochitl's own ghost buster for a full refresh (`DocumentView.ghostBuster.userRequestedClear()`, the
 same refresh xochitl does by itself after some screens).
@@ -24,7 +27,8 @@ or tick it in the rmpp installer.
 
 `librmpp-refresh.so` is loaded into xochitl by `rmpp-preload` (`/usr/lib/rmpp-preload.d/50-rmpp-refresh.so`). It
 adds a `ToolbarTool` (QML, no moc) next to xochitl's `convertToTextButton`; tapping it closes the toolbar menu and,
-400 ms later, calls the ghost buster.
+400 ms later, calls the ghost buster. It also watches `QInputMethod::visibleChanged` and calls the ghost buster
+700 ms after the keyboard appears (after its slide animation), only while a document is open.
 
 ## Build
 
