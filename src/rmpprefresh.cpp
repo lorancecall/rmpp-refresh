@@ -1,12 +1,14 @@
 // rmpp-refresh: a "Refresh screen" button for the reMarkable Paper Pro (xochitl, loaded with LD_PRELOAD via
 // rmpp-preload). It sits in the notebook toolbar's convert menu, next to xochitl's own "Convert to text", and does a
 // full e-paper refresh (clears ghosting) through xochitl's own ghost buster: DocumentView.ghostBuster.userRequestedClear().
+// The same refresh also runs once after the on-screen keyboard opens and once after it closes.
 #include <functional>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QInputMethod>
 #include <QtGui/QWindow>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlContext>
@@ -97,6 +99,27 @@ void tryInject() {
     qWarning("[rmpp-refresh] button added");
 }
 
+// Full refresh once the on-screen keyboard has slid in and once it has gone: opening and closing it leaves ghosting
+// in the notebook. Same ghost buster as the button, only while a document is open.
+void refreshAfterKeyboard() {
+    QQuickItem *dv = findAnywhere([](QQuickItem *i) { return classStarts(i, "DocumentView_QMLTYPE") && i->isVisible(); });
+    QObject *gb = dv ? dv->property("ghostBuster").value<QObject *>() : nullptr;
+    if (gb && QMetaObject::invokeMethod(gb, "userRequestedClear"))
+        qWarning("[rmpp-refresh] refresh (keyboard %s)", QGuiApplication::inputMethod()->isVisible() ? "shown" : "hidden");
+}
+
+void watchKeyboard() {
+    static bool connected = false;
+    QInputMethod *im = QGuiApplication::inputMethod();
+    if (connected || !im) return;
+    connected = true;
+    static QTimer *later = new QTimer(qApp);
+    later->setSingleShot(true);
+    later->setInterval(700);   // after the keyboard's slide animation
+    QObject::connect(later, &QTimer::timeout, qApp, [] { refreshAfterKeyboard(); });
+    QObject::connect(im, &QInputMethod::visibleChanged, qApp, [] { later->start(); });
+}
+
 void init() {
     auto *app = QCoreApplication::instance();
     g_state = new QQmlPropertyMap(app);
@@ -105,7 +128,10 @@ void init() {
         if (key == QLatin1String("command") && v.toString().startsWith(QLatin1String("refresh#"))) refresh();
     });
     auto *t = new QTimer(app);
-    QObject::connect(t, &QTimer::timeout, app, [] { tryInject(); });
+    QObject::connect(t, &QTimer::timeout, app, [] {
+        tryInject();
+        watchKeyboard();
+    });
     t->start(1500);
     qWarning("[rmpp-refresh] loaded");
 }
