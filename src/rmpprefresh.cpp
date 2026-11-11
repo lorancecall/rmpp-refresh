@@ -1,7 +1,7 @@
 // rmpp-refresh: a "Refresh screen" button for the reMarkable Paper Pro (xochitl, loaded with LD_PRELOAD via
 // rmpp-preload). It sits in the notebook toolbar's convert menu, next to xochitl's own "Convert to text", and does a
 // full e-paper refresh (clears ghosting) through xochitl's own ghost buster: DocumentView.ghostBuster.userRequestedClear().
-// The same refresh also runs once after the on-screen keyboard opens and once after it closes.
+// The same refresh also runs once after the on-screen keyboard opens.
 #include <functional>
 
 #include <QtCore/QCoreApplication>
@@ -99,13 +99,13 @@ void tryInject() {
     qWarning("[rmpp-refresh] button added");
 }
 
-// Full refresh once the on-screen keyboard has slid in and once it has gone: opening and closing it leaves ghosting
-// in the notebook. Same ghost buster as the button, only while a document is open.
+// Full refresh once the on-screen keyboard has slid in: opening it leaves ghosting in the notebook. Same ghost
+// buster as the button, only while a document is open.
 void refreshAfterKeyboard() {
     QQuickItem *dv = findAnywhere([](QQuickItem *i) { return classStarts(i, "DocumentView_QMLTYPE") && i->isVisible(); });
     QObject *gb = dv ? dv->property("ghostBuster").value<QObject *>() : nullptr;
     if (gb && QMetaObject::invokeMethod(gb, "userRequestedClear"))
-        qWarning("[rmpp-refresh] refresh (keyboard %s)", QGuiApplication::inputMethod()->isVisible() ? "shown" : "hidden");
+        qWarning("[rmpp-refresh] refresh (keyboard shown)");
 }
 
 void watchKeyboard() {
@@ -117,7 +117,10 @@ void watchKeyboard() {
     later->setSingleShot(true);
     later->setInterval(700);   // after the keyboard's slide animation
     QObject::connect(later, &QTimer::timeout, qApp, [] { refreshAfterKeyboard(); });
-    QObject::connect(im, &QInputMethod::visibleChanged, qApp, [] { later->start(); });
+    // only when it opens: closing it already makes xochitl redraw the page, a second refresh there flashed twice
+    QObject::connect(im, &QInputMethod::visibleChanged, qApp, [] {
+        if (QGuiApplication::inputMethod()->isVisible()) later->start(); else later->stop();
+    });
 }
 
 void init() {
