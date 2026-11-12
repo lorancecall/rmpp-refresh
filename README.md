@@ -1,5 +1,9 @@
 # rmpp-refresh
 
+<img src="docs/rmpp-refresh.gif" alt="rmpp-refresh demo" width="405">
+
+*One tap clears e-paper ghosting: in the notebook toolbar (above the three dots) and in the library menu (above Trash).*
+
 A **Refresh screen** button for the reMarkable Paper Pro: one tap redraws the whole e-paper screen (a full refresh
 that clears ghosting), in a notebook or in the library.
 
