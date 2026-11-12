@@ -1,6 +1,7 @@
 // rmpp-refresh: a "Refresh screen" button for the reMarkable Paper Pro (xochitl, loaded with LD_PRELOAD via
-// rmpp-preload). It sits in the notebook toolbar's convert menu, next to xochitl's own "Convert to text", and does a
-// full e-paper refresh (clears ghosting) through xochitl's own ghost buster: DocumentView.ghostBuster.userRequestedClear().
+// rmpp-preload). It sits in the notebook toolbar right above the three dots, and in the library's sidebar right above
+// Trash. It does a full e-paper refresh (clears ghosting) through xochitl's own ghost buster:
+// DocumentView.ghostBuster (notebook) or MainView.ghostBuster (library), userRequestedClear().
 // The same refresh also runs once after the on-screen keyboard opens.
 #include <functional>
 
@@ -51,6 +52,55 @@ void refresh() {
         QObject *gb = dvp ? dvp->property("ghostBuster").value<QObject *>() : nullptr;
         if (!gb || !QMetaObject::invokeMethod(gb, "userRequestedClear")) qWarning("[rmpp-refresh] no ghost buster");
     });
+}
+
+// Library: the ghost buster of the main view (no document open).
+void refreshLibrary() {
+    QQuickItem *mv = findAnywhere([](QQuickItem *i) { return classStarts(i, "MainView") && i->isVisible(); });
+    QObject *gb = mv ? mv->property("ghostBuster").value<QObject *>() : nullptr;
+    if (!gb || !QMetaObject::invokeMethod(gb, "userRequestedClear")) qWarning("[rmpp-refresh] no library ghost buster");
+}
+
+const char *kSidebarQml = R"QML(
+import QtQuick
+import QtQuick.Layouts
+import ark.controls as ArkControls
+ArkControls.SidebarItem {
+    objectName: "rmppRefreshSidebar"
+    text: "Refresh screen"
+    iconSource: "qrc:/ark/icons/arrows_counter_clockwise"
+    focusPolicy: Qt.StrongFocus
+    Layout.fillWidth: true
+    onTriggered: rmppRefresh.command = "library#" + Date.now()
+}
+)QML";
+
+// Library sidebar (#Sidebar, a ColumnLayout: the filters at the top, a spacer, then Trash, Guides, Settings): the
+// button goes directly before Trash, so it sits right above it and the layout keeps other add-ons' rows (inserted
+// at the top or elsewhere) from overlapping it.
+void tryInjectSidebar() {
+    QQuickItem *trash = findAnywhere([](QQuickItem *i) { return i->objectName() == QLatin1String("filterTrashed"); });
+    if (!trash || !trash->parentItem() || trash->property("_rmppRefresh").toBool()) return;
+    QQmlEngine *eng = qmlEngine(trash);
+    QQmlContext *base = qmlContext(trash);
+    if (!eng || !base) return;
+    trash->setProperty("_rmppRefresh", true);
+    QQuickItem *layout = trash->parentItem();
+    auto *ctx = new QQmlContext(base, layout);
+    ctx->setContextProperty(QStringLiteral("rmppRefresh"), g_state);
+    QQmlComponent comp(eng);
+    comp.setData(QByteArray(kSidebarQml), QUrl(QStringLiteral("qrc:/rmpprefresh/SidebarButton.qml")));
+    QObject *o = comp.create(ctx);
+    auto *item = qobject_cast<QQuickItem *>(o);
+    if (!item) {
+        for (const auto &e : comp.errors()) qWarning("[rmpp-refresh] %s", qPrintable(e.toString()));
+        delete o;
+        return;
+    }
+    item->setParentItem(layout);
+    item->setParent(layout);
+    item->stackBefore(trash);
+    qWarning("[rmpp-refresh] sidebar button added");
 }
 
 const char *kButtonQml = R"QML(
@@ -127,11 +177,14 @@ void init() {
     g_state = new QQmlPropertyMap(app);
     g_state->insert(QStringLiteral("command"), QString());
     QObject::connect(g_state, &QQmlPropertyMap::valueChanged, app, [](const QString &key, const QVariant &v) {
-        if (key == QLatin1String("command") && v.toString().startsWith(QLatin1String("refresh#"))) refresh();
+        if (key != QLatin1String("command")) return;
+        if (v.toString().startsWith(QLatin1String("refresh#"))) refresh();
+        else if (v.toString().startsWith(QLatin1String("library#"))) refreshLibrary();
     });
     auto *t = new QTimer(app);
     QObject::connect(t, &QTimer::timeout, app, [] {
         tryInject();
+        tryInjectSidebar();
         watchKeyboard();
     });
     t->start(1500);
