@@ -58,44 +58,43 @@ import QtQuick
 import xofm.libs.toolbar
 ToolbarTool {
     objectName: "rmppRefreshButton"
-    type: ToolbarTool.Type.FoldoutButton
-    shouldShow: toolbar.notePage
+    type: ToolbarTool.Type.ToolbarButton
+    group: 2
+    visible: !!toolbar && toolbar.notePage
     label: "Refresh screen"
     iconSource: "qrc:/ark/icons/arrows_counter_clockwise"
     onClicked: rmppRefresh.command = "refresh#" + Date.now()
 }
 )QML";
 
-// Insert the button after xochitl's "Convert to text" tool (and after other add-ons' tools placed there).
+// Insert the button into the toolbar's layout (#toolbarLayout, a GridLayout of tool loaders with a spacer between the
+// editing tools and the bottom group) directly before the "Notebook settings" tool: the spacer gets shorter, so the
+// bottom tools move up by one button. One toolbar per open document; the loader is marked once done.
 void tryInject() {
-    QQuickItem *native = findAnywhere([](QQuickItem *i) { return i->objectName() == QLatin1String("convertToTextButton"); });
-    if (!native || !native->parentItem() || native->property("_rmppRefresh").toBool()) return;
-    QQmlEngine *eng = qmlEngine(native);
-    QQmlContext *base = qmlContext(native);
-    if (!eng || !base) return;
-    native->setProperty("_rmppRefresh", true);
-    // the tool may sit in single-child wrappers (loaders): insert in the first container that lays out several tools
-    QQuickItem *anchor = native, *box = native->parentItem();
-    while (box && box->childItems().size() == 1 && box->parentItem()) { anchor = box; box = box->parentItem(); }
-    auto *ctx = new QQmlContext(base, box);
+    QQuickItem *settings = findAnywhere([](QQuickItem *i) {
+        return i->objectName() == QLatin1String("secondaryToolLoader_settingsMenu") && i->isVisible();
+    });
+    if (!settings || !settings->parentItem() || settings->property("_rmppRefresh").toBool()) return;
+    QQuickItem *menu = findItem(settings, [](QQuickItem *i) { return i->objectName() == QLatin1String("settingsMenu"); });
+    QQmlEngine *eng = qmlEngine(settings);
+    QQmlContext *base = qmlContext(settings);
+    if (!menu || !eng || !base) return;
+    settings->setProperty("_rmppRefresh", true);
+    QQuickItem *layout = settings->parentItem();
+    auto *ctx = new QQmlContext(base, layout);
     ctx->setContextProperty(QStringLiteral("rmppRefresh"), g_state);
     QQmlComponent comp(eng);
     comp.setData(QByteArray(kButtonQml), QUrl(QStringLiteral("qrc:/rmpprefresh/Button.qml")));
-    QObject *o = comp.createWithInitialProperties({{QStringLiteral("toolbar"), native->property("toolbar")}}, ctx);
+    QObject *o = comp.createWithInitialProperties({{QStringLiteral("toolbar"), menu->property("toolbar")}}, ctx);
     auto *item = qobject_cast<QQuickItem *>(o);
     if (!item) {
         for (const auto &e : comp.errors()) qWarning("[rmpp-refresh] %s", qPrintable(e.toString()));
         delete o;
         return;
     }
-    item->setParentItem(box);
-    item->setParent(box);
-    // last of the tools that follow "Convert to text" (keeps other add-ons' convert tools together)
-    QQuickItem *after = anchor;
-    const auto kids = box->childItems();
-    for (int i = int(kids.indexOf(anchor)) + 1; i < kids.size(); ++i)
-        if (kids[i] != item && kids[i]->objectName().startsWith(QLatin1String("rmpp"))) after = kids[i];
-    item->stackAfter(after);
+    item->setParentItem(layout);
+    item->setParent(layout);
+    item->stackBefore(settings);
     qWarning("[rmpp-refresh] button added");
 }
 
