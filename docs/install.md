@@ -1,27 +1,36 @@
 # Installing rmpp-refresh
 
-The usual way is **rmpp setup** from [rmpp-packages](https://github.com/lorancecall/rmpp-packages#install): it sets
-up developer-mode SSH, Vellum and this repository's package, and **Restore** puts the add-ons back after a
-reMarkable OS update. This page is for everything else.
+The usual way is **rmpp setup** from [rmpp-packages](https://github.com/lorancecall/rmpp-packages#install), as the
+desktop app or the script: tick **Screen refresh button**. This page covers the rest. Steps that are the same for every rmpp
+add-on live in rmpp-packages and are linked here, not repeated.
 
-## With Vellum on the command line
+## Packages
 
-On the tablet, once (adds the rmpp package repository and its signing key to Vellum):
+| Package | Installs with it |
+|---|---|
+| `rmpp-refresh` | `rmpp-preload` |
+
+Dependencies are installed automatically, in rmpp setup and with `vellum add`. All packages and what needs what:
+[packages.md](https://github.com/lorancecall/rmpp-packages/blob/main/docs/packages.md).
+
+## Without rmpp setup
+
+Follow [manual-install.md](https://github.com/lorancecall/rmpp-packages/blob/main/docs/manual-install.md) (Vellum and the rmpp package repository), then on the tablet:
 
 ```sh
-wget -qO- https://lorancecall.github.io/rmpp-packages/install.sh | sh
+vellum add rmpp-refresh
 ```
 
-Then:
+## Uninstall
 
-```sh
-vellum add rmpp-refresh      # install; xochitl restarts once
-vellum upgrade         # later: updates
-vellum reenable        # after a reMarkable OS update
-vellum del rmpp-refresh      # remove
-```
+- **Just this add-on:** untick it in rmpp setup and press **Remove unticked installed**, or `vellum del rmpp-refresh`.
+- **What stays:** nothing (it has no settings). Delete it by hand to start fresh, or use step 3 of
+  [uninstall.md](https://github.com/lorancecall/rmpp-packages/blob/main/docs/uninstall.md).
+- **Everything rmpp, and before a factory reset:** [uninstall.md](https://github.com/lorancecall/rmpp-packages/blob/main/docs/uninstall.md).
 
-To remove **everything** the rmpp add-ons put on the tablet, use **Remove everything** in rmpp setup.
+## Next to other mods
+
+It runs next to xovi and other Vellum packages: [how-it-works.md](https://github.com/lorancecall/rmpp-packages/blob/main/docs/how-it-works.md#next-to-other-mods).
 
 ## Build and install by hand
 
