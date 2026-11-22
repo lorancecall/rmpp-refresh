@@ -54,7 +54,7 @@ ssh rmpp 'mount -o remount,rw / &&
 ```
 
 The package recipe (VELBUILD) is in
-[rmpp-packages/packages/rmpp-refresh](https://github.com/lorancecall/rmpp-packages/tree/main/packages/rmpp-refresh); the next
+[packaging/](../packaging/) (rmpp-packages builds and publishes the package from there); the next
 `vellum upgrade` or reinstall puts the released files back.
 
 On the Paper Pro, never run `systemctl stop xochitl` (it powers the Paper Pro off); run `systemctl reset-failed xochitl`
