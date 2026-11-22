@@ -5,20 +5,10 @@
 *One tap clears e-paper ghosting: in the notebook toolbar (above the three dots) and in the library menu (above Trash).*
 
 A **Refresh screen** button for the reMarkable Paper Pro: one tap redraws the whole e-paper screen (a full refresh
-that clears ghosting), in a notebook or in the library.
+that clears ghosting), in a notebook or in the library, and once after the on-screen keyboard opens. Runs without
+xovi and keeps working after a reboot.
 
-It also refreshes once after the on-screen keyboard opens (that leaves ghosting in the notebook; closing it already
-makes xochitl redraw the page).
-
-The button is in two places:
-
-- **Notebook:** in the toolbar, right above the three dots (⋯). It closes the toolbar menu first, then asks xochitl's
-  own ghost buster for a full refresh (`DocumentView.ghostBuster.userRequestedClear()`, the same refresh xochitl does
-  by itself after some screens).
-- **Library:** in the left sidebar (☰), right above Trash. It uses the library's ghost buster
-  (`MainView.ghostBuster`).
-
-Tested on OS 3.29 (Qt 6.10).
+Tested on reMarkable Paper Pro, OS 3.29.1.
 
 > Part of the **rmpp add-ons**, built on [rmpp-packages](https://github.com/lorancecall/rmpp-packages): it is
 > installed by rmpp setup, loaded into xochitl at every boot by rmpp-preload (no xovi), and kept up to date with
@@ -26,13 +16,23 @@ Tested on OS 3.29 (Qt 6.10).
 
 ## Install
 
-Install **rmpp setup** (desktop app or a one-line script) from
-[rmpp-packages](https://github.com/lorancecall/rmpp-packages#install) and tick **rmpp-refresh**.
-It needs developer mode; the rmpp-packages page explains it.
-After a reMarkable OS update, press **Restore** in rmpp setup.
+Start at **[rmpp-packages](https://github.com/lorancecall/rmpp-packages#install)**: it explains developer mode and
+has **rmpp setup**, the installer for all rmpp add-ons.
 
-Other ways (Vellum on the command line, building and installing it yourself) and removal:
-[docs/install.md](docs/install.md).
+- In rmpp setup, tick **Screen refresh button** (rmpp-refresh).
+- After a reMarkable OS update: **Restore** in rmpp setup.
+- Other ways (Vellum on the command line, building and installing it yourself) and removal:
+  [docs/install.md](docs/install.md).
+
+## Use
+
+- **Notebook:** tap **Refresh screen** in the toolbar, right above the three dots (⋯). It closes the toolbar menu,
+  then asks xochitl's own ghost buster for a full refresh (`DocumentView.ghostBuster.userRequestedClear()`, the same
+  refresh xochitl does by itself after some screens).
+- **Library:** tap **Refresh screen** in the left sidebar (☰), right above Trash (the library's ghost buster,
+  `MainView.ghostBuster`).
+- **Keyboard:** nothing to do: the screen refreshes once after the on-screen keyboard opens (opening it leaves
+  ghosting in the notebook; closing it already makes xochitl redraw the page).
 
 ## How it works
 
@@ -46,7 +46,7 @@ from overlapping it. It also watches `QInputMethod::visibleChanged` and calls th
 
 ## Build
 
-See [docs/install.md](docs/install.md#build-and-install-by-hand).
+Building and the development install: [docs/install.md](docs/install.md#build-and-install-by-hand).
 
 ## License
 
