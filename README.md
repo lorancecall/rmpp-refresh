@@ -8,7 +8,8 @@ A **Refresh screen** button for the reMarkable Paper Pro: one tap redraws the wh
 that clears ghosting), in a notebook or in the library, and once after the on-screen keyboard opens. Runs without
 xovi and keeps working after a reboot.
 
-Tested on reMarkable Paper Pro, OS 3.29.1.
+Made for and tested on the reMarkable Paper Pro with OS 3.29.1 only; other reMarkable models are not supported
+and their compatibility is not guaranteed. Following newer OS versions happens when I have time, and may not happen.
 
 > Part of the **rmpp add-ons**, built on [rmpp-packages](https://github.com/lorancecall/rmpp-packages): it is
 > installed by rmpp setup, loaded into xochitl at every boot by rmpp-preload (no xovi), and kept up to date with
