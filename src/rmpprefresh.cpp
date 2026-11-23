@@ -149,8 +149,11 @@ void tryInject() {
 }
 
 // Full refresh once the on-screen keyboard has slid in: opening it leaves ghosting in the notebook. Same ghost
-// buster as the button, only while a document is open.
+// buster as the button, only while a document is open. Another add-on that refreshes on its own when its keyboard
+// UI closes (rmpp-hwr's edit box) opts out by setting the application property rmppKeyboardRefresh to false.
 void refreshAfterKeyboard() {
+    const QVariant optOut = qApp->property("rmppKeyboardRefresh");
+    if (optOut.isValid() && !optOut.toBool()) return;
     QQuickItem *dv = findAnywhere([](QQuickItem *i) { return classStarts(i, "DocumentView_QMLTYPE") && i->isVisible(); });
     QObject *gb = dv ? dv->property("ghostBuster").value<QObject *>() : nullptr;
     if (gb && QMetaObject::invokeMethod(gb, "userRequestedClear"))
