@@ -1,7 +1,7 @@
 maintainer="lorancecall <84116812+lorancecall@users.noreply.github.com>"
 pkgname=rmpp-refresh
-pkgver=0.3.0
-pkgrel=2
+pkgver=0.3.1
+pkgrel=0
 upstream_author="lorancecall"
 category="ui"
 pkgdesc="Refresh screen button in the notebook toolbar: a full e-paper refresh that clears ghosting"
